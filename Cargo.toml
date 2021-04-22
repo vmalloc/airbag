@@ -1,0 +1,10 @@
+[package]
+name = "airbag"
+version = "0.0.1"
+authors = ["vmalloc@gmail.com"]
+edition = "2018"
+description = "Library for handling errors and panics using 3rd party services"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
