@@ -3,7 +3,7 @@ authors = ["vmalloc@gmail.com"]
 description = "Library for handling errors and panics using 3rd party services"
 edition = "2018"
 name = "airbag"
-version = "0.0.1"
+version = "0.0.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
