@@ -20,5 +20,3 @@ sha2 = "0.9.3"
 env_logger = "*"
 tokio = {version = "1", features = ["macros", "rt-multi-thread"]}
 
-[patch.crates-io]
-pagerduty-rs = {path = "/tmp/pagerduty-rs"}
