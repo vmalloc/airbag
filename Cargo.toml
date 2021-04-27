@@ -1,10 +1,19 @@
 [package]
+authors = ["vmalloc@gmail.com"]
+description = "Library for handling errors and panics using 3rd party services"
+edition = "2018"
 name = "airbag"
 version = "0.0.1"
-authors = ["vmalloc@gmail.com"]
-edition = "2018"
-description = "Library for handling errors and panics using 3rd party services"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = {version = "1.0.40", features = ["backtrace"]}
+lazy_static = "1.4.0"
+log = "0.4.14"
+pagerduty-rs = {version = "0.1.1", features = ["sync"]}
+parking_lot = "0.11.1"
+sha2 = "0.9.3"
+
+[dev-dependencies]
+tokio = {version = "1", features = ["macros", "rt-multi-thread"]}
