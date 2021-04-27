@@ -2,6 +2,7 @@
 authors = ["vmalloc@gmail.com"]
 description = "Library for handling errors and panics using 3rd party services"
 edition = "2018"
+license = "MIT"
 name = "airbag"
 version = "0.0.2"
 
