@@ -17,4 +17,8 @@ parking_lot = "0.11.1"
 sha2 = "0.9.3"
 
 [dev-dependencies]
+env_logger = "*"
 tokio = {version = "1", features = ["macros", "rt-multi-thread"]}
+
+[patch.crates-io]
+pagerduty-rs = {path = "/tmp/pagerduty-rs"}

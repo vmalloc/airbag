@@ -4,16 +4,21 @@ use pagerduty_rs::types::*;
 use parking_lot::RwLock;
 use std::{fmt::Debug, sync::Arc};
 
+mod panic_handler;
 pub mod prelude;
 
+const MAX_SUMMARY_LENGTH: usize = 1000;
+
 lazy_static! {
-    static ref PAGERDUTY_INTEGRATION_KEY: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
+    pub(crate) static ref PAGERDUTY_INTEGRATION_KEY: Arc<RwLock<Option<String>>> =
+        Arc::new(RwLock::new(None));
 }
 
 pub fn configure_pagerduty(integration_key: impl Into<String>) {
     PAGERDUTY_INTEGRATION_KEY
         .write()
         .replace(integration_key.into());
+    crate::panic_handler::install();
 }
 
 pub trait AirbagResult: Sized {
@@ -30,14 +35,7 @@ impl<T, E: Debug + 'static> AirbagResult for Result<T, E> {
             let integration_key = PAGERDUTY_INTEGRATION_KEY.read().clone();
             if let Some(key) = integration_key {
                 let e = generate_error_event(e);
-                let _ = std::thread::spawn(move || {
-                    let ev2 = EventsV2::new(key, Some("airbag".to_owned())).unwrap();
-                    if let Err(e) = ev2.event(e) {
-                        log::error!("Unable to send alert to PagerDuty: {:?}", e);
-                    }
-                })
-                .join()
-                .map_err(|_| log::error!("Thread panic detected"));
+                dispatch_pagerduty_event(key, e);
             }
         }
         self
@@ -76,4 +74,21 @@ fn sha256(s: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(s.as_bytes());
     format!("{:x}", hasher.finalize())
+}
+
+pub(crate) fn dispatch_pagerduty_event(key: String, mut e: Event<String>) {
+    if let Event::AlertTrigger(t) = &mut e {
+        if t.payload.summary.len() > MAX_SUMMARY_LENGTH {
+            t.payload.summary.truncate(MAX_SUMMARY_LENGTH - 3);
+            t.payload.summary.push_str("...");
+        }
+    }
+    let _ = std::thread::spawn(move || {
+        let ev2 = EventsV2::new(key, Some("airbag".to_owned())).unwrap();
+        if let Err(e) = ev2.event(e) {
+            log::error!("Unable to send alert to PagerDuty: {:?}", e);
+        }
+    })
+    .join()
+    .map_err(|_| log::error!("Thread panic detected"));
 }
