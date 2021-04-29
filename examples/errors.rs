@@ -15,7 +15,10 @@ fn h() -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() {
-    airbag::configure_pagerduty(
+    env_logger::Builder::new()
+        .filter_level(log::LevelFilter::Debug)
+        .init();
+    let _guard = airbag::configure_pagerduty(
         std::env::var("INTEGRATION_KEY").expect("INTEGRATION_KEY not specified"),
     );
 
@@ -23,5 +26,5 @@ async fn main() {
         println!("* {:?}", e);
         e
     })
-    .airbag_drop()
+    .airbag_drop();
 }

@@ -17,7 +17,7 @@ async fn main() {
     env_logger::Builder::new()
         .filter_level(log::LevelFilter::Trace)
         .init();
-    airbag::configure_pagerduty(
+    let _guard = airbag::configure_pagerduty(
         std::env::var("INTEGRATION_KEY").expect("INTEGRATION_KEY not specified"),
     );
 
