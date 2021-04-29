@@ -23,5 +23,5 @@ async fn main() {
         println!("* {:?}", e);
         e
     })
-    .airbag_swallow()
+    .airbag_drop()
 }

@@ -12,11 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Clippy
-        run: cargo clippy --tests --workspace
+        run: cargo clippy --tests --workspace --examples
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --all --examples
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test --verbose --all --examples
       - name: Publish (dry run)
         run: cargo publish --dry-run
         if: github.ref != 'refs/heads/master'

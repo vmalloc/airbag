@@ -22,7 +22,7 @@ pub fn configure_pagerduty(integration_key: impl Into<String>) {
 }
 
 pub trait AirbagResult: Sized {
-    fn airbag_swallow(self) {
+    fn airbag_drop(self) {
         drop(self.airbag())
     }
 
