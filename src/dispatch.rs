@@ -2,7 +2,7 @@ use crossbeam::channel::{bounded, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use parking_lot::RwLock;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::{sync::Arc, time::Duration};
 
 use crate::utils::DeliverReceipt;
@@ -23,6 +23,7 @@ pub(crate) enum Hub {
     Empty,
     Configured {
         routing_key: String,
+        extra_details: Option<Value>,
         sender: Sender<Message>,
     },
 }
@@ -43,10 +44,25 @@ impl Hub {
     pub(crate) fn dispatch<F: Fn() -> Value>(&self, f: F) -> Option<DeliverReceipt> {
         if let Hub::Configured {
             sender,
+            extra_details,
             routing_key,
         } = self
         {
             let mut dispatched = f();
+
+            let mut details = dispatched["payload"]["custom_details"].take();
+
+            if matches!(&details, Value::Object(_)) {
+                details["additional_details"] = json!(extra_details.clone());
+            } else {
+                details = json!({
+                    "details":  details,
+                    "additional_details": extra_details.clone(),
+                })
+            }
+
+            dispatched["payload"]["custom_details"] = details;
+
             dispatched["routing_key"] = Value::String(routing_key.clone());
             let receipt = DeliverReceipt::default();
             if sender
@@ -63,13 +79,17 @@ impl Hub {
 }
 
 #[must_use = "Airbag guard must be stored to flush messages on program end"]
-pub fn configure_pagerduty(routing_key: impl Into<String>) -> AirbagGuard {
+pub fn configure_pagerduty(
+    routing_key: impl Into<String>,
+    extra_details: Option<Value>,
+) -> AirbagGuard {
     let (sender, receiver) = bounded(BUFFER_SIZE);
     let guard = AirbagGuard {
         sender: sender.clone(),
     };
     *HUB.write() = Hub::Configured {
         routing_key: routing_key.into(),
+        extra_details,
         sender,
     };
 
