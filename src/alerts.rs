@@ -4,6 +4,14 @@ use std::{fmt::Debug, panic::PanicInfo};
 
 const MAX_SUMMARY_LENGTH: usize = 1000;
 
+pub(crate) fn generate_message_alert(
+    summary: impl Into<String>,
+    details: Option<Value>,
+    dedup_key: Option<String>,
+) -> Value {
+    generate_alert(summary.into(), "Airbag".into(), details, dedup_key)
+}
+
 pub(crate) fn generate_error_alert(e: &(impl Debug + 'static)) -> Value {
     let e_any: &dyn std::any::Any = e;
     let e_dbg = format!("{:?}", e);
@@ -13,7 +21,12 @@ pub(crate) fn generate_error_alert(e: &(impl Debug + 'static)) -> Value {
         (e_dbg.clone(), e_dbg, None)
     };
 
-    generate_alert(summary, source, format!("{:?}", e), dedup_key)
+    generate_alert(
+        summary,
+        source,
+        Some(Value::String(format!("{:?}", e))),
+        dedup_key,
+    )
 }
 
 pub(crate) fn generate_panic_alert(info: &PanicInfo) -> Value {
@@ -33,13 +46,18 @@ pub(crate) fn generate_panic_alert(info: &PanicInfo) -> Value {
 
     let dedup_key = Some(sha256(&summary));
 
-    generate_alert(summary.clone(), location, summary, dedup_key)
+    generate_alert(
+        summary.clone(),
+        location,
+        Some(Value::String(summary)),
+        dedup_key,
+    )
 }
 
 fn generate_alert(
     mut summary: String,
     source: String,
-    details: String,
+    details: Option<Value>,
     dedup_key: Option<String>,
 ) -> Value {
     if summary.len() > MAX_SUMMARY_LENGTH {

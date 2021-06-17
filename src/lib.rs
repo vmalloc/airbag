@@ -9,6 +9,7 @@ pub mod prelude;
 mod utils;
 
 pub use dispatch::configure_pagerduty;
+use serde_json::Value;
 
 pub trait AirbagResult<E>: Sized {
     fn airbag_drop(self) {
@@ -38,4 +39,11 @@ impl<T, E: Debug + 'static> AirbagResult<E> for Result<T, E> {
         }
         self
     }
+}
+
+pub fn create_alert(summary: impl Into<String>, details: Option<Value>, dedup_key: Option<String>) {
+    let summary = summary.into();
+    crate::dispatch::HUB.read().dispatch(move || {
+        crate::alerts::generate_message_alert(summary.clone(), details.clone(), dedup_key.clone())
+    });
 }
