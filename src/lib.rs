@@ -16,6 +16,12 @@ pub trait AirbagResult<E>: Sized {
         drop(self.airbag())
     }
 
+    fn airbag_drop_with_dedup_key<S: Into<String>, F: Fn() -> S>(self, dedup_key_factory: F) {
+        drop(self.airbag_with_dedup_key(dedup_key_factory))
+    }
+
+    fn airbag_with_dedup_key<S: Into<String>, F: Fn() -> S>(self, dedup_key_factory: F) -> Self;
+
     fn airbag_if<F: Fn(&E) -> bool>(self, f: F) -> Self;
 
     fn airbag(self) -> Self;
@@ -26,7 +32,7 @@ impl<T, E: Debug + 'static> AirbagResult<E> for Result<T, E> {
         if let Err(e) = &self {
             crate::dispatch::HUB
                 .read()
-                .dispatch(|| crate::alerts::generate_error_alert(e));
+                .dispatch(|| crate::alerts::generate_error_alert(e, None));
         }
         self
     }
@@ -36,6 +42,15 @@ impl<T, E: Debug + 'static> AirbagResult<E> for Result<T, E> {
             if f(e) {
                 return self.airbag();
             }
+        }
+        self
+    }
+
+    fn airbag_with_dedup_key<S: Into<String>, F: Fn() -> S>(self, dedup_key_factory: F) -> Self {
+        if let Err(e) = &self {
+            crate::dispatch::HUB.read().dispatch(|| {
+                crate::alerts::generate_error_alert(e, Some(dedup_key_factory().into()))
+            });
         }
         self
     }

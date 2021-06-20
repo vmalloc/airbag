@@ -12,13 +12,17 @@ pub(crate) fn generate_message_alert(
     generate_alert(summary.into(), "Airbag".into(), details, dedup_key)
 }
 
-pub(crate) fn generate_error_alert(e: &(impl Debug + 'static)) -> Value {
+pub(crate) fn generate_error_alert(e: &(impl Debug + 'static), dedup_key: Option<String>) -> Value {
     let e_any: &dyn std::any::Any = e;
     let e_dbg = format!("{:?}", e);
     let (summary, source, dedup_key) = if let Some(e) = e_any.downcast_ref::<anyhow::Error>() {
-        (e.to_string(), e_dbg.clone(), Some(sha256(&e_dbg)))
+        (
+            e.to_string(),
+            e_dbg.clone(),
+            dedup_key.or_else(|| Some(sha256(&e_dbg))),
+        )
     } else {
-        (e_dbg.clone(), e_dbg, None)
+        (e_dbg.clone(), e_dbg, dedup_key)
     };
 
     generate_alert(
