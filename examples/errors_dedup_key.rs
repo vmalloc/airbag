@@ -23,6 +23,8 @@ async fn main() {
     let _guard = airbag::configure_pagerduty(
         std::env::var("INTEGRATION_KEY").expect("INTEGRATION_KEY not specified"),
         Some(json!({"id": 10})),
+        None,
+        None,
     );
 
     for _ in 0..3 {

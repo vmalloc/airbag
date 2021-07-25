@@ -25,6 +25,8 @@ pub(crate) enum Hub {
         routing_key: String,
         extra_details: Option<Value>,
         sender: Sender<Message>,
+        dedup_key_prefix: Option<String>,
+        summary_prefix: Option<String>,
     },
 }
 
@@ -46,6 +48,8 @@ impl Hub {
             sender,
             extra_details,
             routing_key,
+            dedup_key_prefix,
+            summary_prefix,
         } = self
         {
             let mut dispatched = f();
@@ -59,6 +63,18 @@ impl Hub {
                     "details":  details,
                     "additional_details": extra_details.clone(),
                 })
+            }
+
+            if let Some(prefix) = summary_prefix {
+                if let Value::String(ref mut summary) = dispatched["payload"]["summary"] {
+                    summary.insert_str(0, prefix);
+                }
+            }
+
+            if let Some(prefix) = dedup_key_prefix {
+                if let Value::String(ref mut key) = dispatched["dedup_key"] {
+                    key.insert_str(0, prefix);
+                }
             }
 
             dispatched["payload"]["custom_details"] = details;
@@ -82,6 +98,8 @@ impl Hub {
 pub fn configure_pagerduty(
     routing_key: impl Into<String>,
     extra_details: Option<Value>,
+    dedup_key_prefix: Option<String>,
+    summary_prefix: Option<String>,
 ) -> AirbagGuard {
     let (sender, receiver) = bounded(BUFFER_SIZE);
     let guard = AirbagGuard {
@@ -91,6 +109,8 @@ pub fn configure_pagerduty(
         routing_key: routing_key.into(),
         extra_details,
         sender,
+        dedup_key_prefix,
+        summary_prefix,
     };
 
     std::thread::spawn(move || {
