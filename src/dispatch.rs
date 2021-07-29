@@ -1,3 +1,4 @@
+use anyhow::bail;
 use crossbeam::channel::{bounded, Sender};
 use lazy_static::lazy_static;
 use log::error;
@@ -128,7 +129,18 @@ pub fn configure_pagerduty(
                         .post("https://events.pagerduty.com/v2/enqueue")
                         .json(alert)
                         .send()
-                        .and_then(|resp| resp.error_for_status())
+                        .map_err(anyhow::Error::from)
+                        .and_then(|resp| {
+                            if !resp.status().is_success() {
+                                bail!(
+                                    "Error {:?} while sending alert: {:?}",
+                                    resp.status(),
+                                    resp.text().as_deref().unwrap_or("<no reason available>")
+                                )
+                            } else {
+                                Ok(resp)
+                            }
+                        })
                     {
                         error!("Failed dispatching PD event ({:?}). Going to retry...", e);
                         std::thread::sleep(Duration::from_secs(5));
