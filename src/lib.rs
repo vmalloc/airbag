@@ -30,6 +30,7 @@ pub trait AirbagResult<E>: Sized {
 impl<T, E: Debug + 'static> AirbagResult<E> for Result<T, E> {
     fn airbag(self) -> Self {
         if let Err(e) = &self {
+            log::error!("Airbag: handling error {:?}", e);
             crate::dispatch::HUB
                 .read()
                 .dispatch(|| crate::alerts::generate_error_alert(e, None));
