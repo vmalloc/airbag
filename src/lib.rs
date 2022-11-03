@@ -63,3 +63,15 @@ pub fn create_alert(summary: impl Into<String>, details: Option<Value>, dedup_ke
         crate::alerts::generate_message_alert(summary.clone(), details.clone(), dedup_key.clone())
     });
 }
+
+#[cfg(doctest)]
+mod test_readme {
+    macro_rules! external_doc_test {
+        ($x:expr) => {
+            #[doc = $x]
+            extern "C" {}
+        };
+    }
+
+    external_doc_test!(include_str!("../README.md"));
+}

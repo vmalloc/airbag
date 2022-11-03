@@ -1,5 +1,5 @@
 use anyhow::bail;
-use crossbeam::channel::{bounded, Sender};
+use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use parking_lot::RwLock;
@@ -120,45 +120,53 @@ pub fn configure_pagerduty(
             .build()
             .expect("Can't create HTTP client");
 
-        // Err means disconnection of the sender side
-        while let Ok(event) = receiver.recv() {
-            match &event {
-                Message::Alert(alert, receipt) => {
-                    log::debug!("Got PD alert to send");
-                    while let Err(e) = client
-                        .post("https://events.pagerduty.com/v2/enqueue")
-                        .json(alert)
-                        .send()
-                        .map_err(anyhow::Error::from)
-                        .and_then(|resp| {
-                            if !resp.status().is_success() {
-                                bail!(
-                                    "Error {:?} while sending alert: {:?}",
-                                    resp.status(),
-                                    resp.text().as_deref().unwrap_or("<no reason available>")
-                                )
-                            } else {
-                                Ok(resp)
-                            }
-                        })
-                    {
-                        error!("Failed dispatching PD event ({:?}). Going to retry...", e);
-                        std::thread::sleep(Duration::from_secs(5));
-                    }
-                    log::info!("Sent successfully");
-                    receipt.signal()
-                }
-                Message::Terminate(receipt) => {
-                    receipt.signal();
-                    break;
-                }
-            }
-        }
+        #[cfg(not(doctest))]
+        send_receive_messages_to_pager_duty(client, receiver);
     });
 
     crate::panic_handler::install();
 
     guard
+}
+
+fn send_receive_messages_to_pager_duty(
+    client: reqwest::blocking::Client,
+    receiver: Receiver<Message>,
+) {
+    // Err means disconnection of the sender side
+    while let Ok(event) = receiver.recv() {
+        match &event {
+            Message::Alert(alert, receipt) => {
+                log::debug!("Got PD alert to send");
+                while let Err(e) = client
+                    .post("https://events.pagerduty.com/v2/enqueue")
+                    .json(alert)
+                    .send()
+                    .map_err(anyhow::Error::from)
+                    .and_then(|resp| {
+                        if !resp.status().is_success() {
+                            bail!(
+                                "Error {:?} while sending alert: {:?}",
+                                resp.status(),
+                                resp.text().as_deref().unwrap_or("<no reason available>")
+                            )
+                        } else {
+                            Ok(resp)
+                        }
+                    })
+                {
+                    error!("Failed dispatching PD event ({:?}). Going to retry...", e);
+                    std::thread::sleep(Duration::from_secs(5));
+                }
+                log::info!("Sent successfully");
+                receipt.signal()
+            }
+            Message::Terminate(receipt) => {
+                receipt.signal();
+                break;
+            }
+        }
+    }
 }
 
 pub struct AirbagGuard {
