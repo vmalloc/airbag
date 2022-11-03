@@ -121,7 +121,7 @@ pub fn configure_pagerduty(
             .expect("Can't create HTTP client");
 
         // Err means disconnection of the sender side
-        while let Some(event) = receiver.recv().ok() {
+        while let Ok(event) = receiver.recv() {
             match &event {
                 Message::Alert(alert, receipt) => {
                     log::debug!("Got PD alert to send");
