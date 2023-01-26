@@ -155,7 +155,10 @@ fn send_receive_messages_to_pager_duty(
                         }
                     })
                 {
-                    error!("Failed dispatching PD event ({:?}). Going to retry...", e);
+                    error!(
+                        "Failed dispatching PD event {:?} ({:?}). Going to retry...",
+                        alert, e
+                    );
                     std::thread::sleep(Duration::from_secs(5));
                 }
                 log::info!("Sent successfully");
