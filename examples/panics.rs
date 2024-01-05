@@ -1,5 +1,5 @@
 use anyhow::Context;
-use serde_json::json;
+use clap::Parser;
 
 fn f() -> anyhow::Result<()> {
     g().context("Calling g")
@@ -13,17 +13,36 @@ fn h() -> anyhow::Result<()> {
     anyhow::bail!("Error here")
 }
 
-#[tokio::main]
-async fn main() {
-    env_logger::Builder::new()
-        .filter_level(log::LevelFilter::Trace)
-        .init();
-    let _guard = airbag::configure_pagerduty(
-        std::env::var("INTEGRATION_KEY").expect("INTEGRATION_KEY not specified"),
-        Some(json!({"id": 6})),
-        Some("dedup prefix".into()),
-        Some("Alert prefix here: ".into()),
-    );
+#[derive(Parser)]
+struct Opts {
+    #[clap(long)]
+    pagerduty_token: Option<String>,
 
+    #[clap(long)]
+    squadcast_token: Option<String>,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
+
+    let opts = Opts::parse();
+
+    let _guard = if let Some(token) = opts.pagerduty_token {
+        airbag::configure(
+            airbag::backends::pagerduty::PagerDuty::builder()
+                .token(token)
+                .build(),
+        )
+    } else if let Some(token) = opts.squadcast_token {
+        airbag::configure(
+            airbag::backends::squadcast::SquadCast::builder()
+                .token(token)
+                .build(),
+        )
+    } else {
+        anyhow::bail!("No token specified")
+    };
     f().expect("Panicking!");
+    Ok(())
 }

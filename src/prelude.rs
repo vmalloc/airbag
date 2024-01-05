@@ -1,1 +1,1 @@
-pub use crate::AirbagResult;
+pub use crate::result::AirbagResult;
