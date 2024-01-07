@@ -3,7 +3,7 @@
 //!
 //! * Support for multiple configurable backends
 //! * [Middleware](middleware) support, allowing applications to customize emitted alerts before they are being sent
-//! * Supports shortcuts for handling `Result`s with propagation to alerts
+//! * Supports [shortcuts](result) for handling `Result`s with propagation to alerts
 //! * Catches and reports panics (only when configured globally
 //!
 //! # Getting Started
