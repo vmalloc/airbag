@@ -196,6 +196,18 @@ impl<S: AsRef<str>> FieldSpec for S {
 
 pub(crate) mod middleware {
 
+    /// Prefixes alert titles with a specific string. This is useful in cases where you want alert titles to easily convey
+    /// instance or context information
+    ///
+    /// ```
+    /// use airbag::prelude::*;
+    ///
+    /// let _guard = airbag::configure(
+    ///   airbag::backends::PagerDuty::builder().token("your token").build().wrap(
+    ///     airbag::middleware::TitlePrefix::new("your prefix")
+    ///   )  
+    /// );
+    /// ```
     pub struct TitlePrefix {
         prefix: String,
     }
@@ -217,6 +229,18 @@ pub(crate) mod middleware {
             alert
         }
     }
+
+    /// Prefixes dedup keys with a specific string. This is useful in case you have multiple instances of a specific app
+    /// and you want the dedup keys from one instance to not interfere with dedup keys of another
+    /// ```
+    /// use airbag::prelude::*;
+    ///
+    /// let _guard = airbag::configure(
+    ///   airbag::backends::PagerDuty::builder().token("your token").build().wrap(
+    ///     airbag::middleware::DedupKeyPrefix::new("your prefix")
+    ///   )  
+    /// );
+    /// ```
 
     pub struct DedupKeyPrefix {
         prefix: String,

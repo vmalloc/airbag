@@ -4,11 +4,10 @@ Airbag is a Rust library that aims to simplify incident reporting to various 3rd
 
 ## Features
 
-Airbag currently supports reporting to:
-
-* PagerDuty (via "Events v2" API integration)
-* SquadCast (via Webhook integration)
-
+* Support for multiple configurable backends
+* Middleware support, allowing applications to customize emitted alerts before they are being sent
+* Supports shortcuts for handling `Result`s with propagation to alerts
+* Catches and reports panics (only when configured globally)
 
 ## Getting Started
 

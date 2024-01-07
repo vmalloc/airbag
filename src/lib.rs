@@ -1,3 +1,26 @@
+//! A Rust library to simplify and streamline incident reporting to various 3rd party services
+//! # Features
+//!
+//! * Support for multiple configurable backends
+//! * [Middleware](middleware) support, allowing applications to customize emitted alerts before they are being sent
+//! * Supports shortcuts for handling `Result`s with propagation to alerts
+//! * Catches and reports panics (only when configured globally
+//!
+//! # Getting Started
+//! You configure airbag by using the [](configure) or [](configure_thread_local) functions to register either a global or a thread-local Airbag handler respectively.
+//!
+//! These functions both receive a [Backend implementor](backends) that will be used to actually emit the generated alerts.
+//!
+//! ```
+//! let _guard = airbag::configure(
+//!     airbag::backends::SquadCast::builder()
+//!       .token("your SquadCast API token here")
+//!       .build());
+//! ```
+//! <p style="background:rgba(255,181,77,0.16);padding:0.75em;">
+//!  <strong>Note:</strong> when in thread-local mode, Airbag does not catch panics, as panic handlers are always a shared resource in Rust
+//! </p>
+///
 pub mod alert;
 pub mod backends;
 mod hub;

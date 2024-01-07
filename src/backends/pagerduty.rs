@@ -6,6 +6,8 @@ use crate::{alert::AlertMeta, utils::json_set_if_not_present};
 
 const MAX_SUMMARY_LENGTH: usize = 1000;
 
+/// The `PagerDuty` struct implements a backend for the [PagerDuty](https://pagerduty.com) service, and uses its
+/// "Events v2" integration API to emit alerts
 #[derive(typed_builder::TypedBuilder)]
 pub struct PagerDuty {
     #[builder(setter(into))]
