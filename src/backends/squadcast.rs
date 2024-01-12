@@ -4,10 +4,26 @@ use serde_json::json;
 
 use crate::{alert::AlertMeta, utils::json_set_if_not_present};
 
+/// The `SquadCast` struct implements a backend for the [SquadCast](https://squadcast.com) service.
+/// Configuration options include SquadCast's region name and webhook token.
+///
+/// The webhook token is the end component of the incidents v2 webhook URL.
+///
+/// For example, if your webhook URL is https://api.eu.squadcast.com/v2/incidents/api/7f550a9f4c44173a37664d938f1355f0f92a47a7,
+/// then your token is "7f550a9f4c44173a37664d938f1355f0f92a47a7", and your region is "eu", meaning the configuration would be
+///
+/// ```
+/// use airbag::backends::squadcast::SquadCast;
+///
+/// let backend = SquadCast::builder().token("7f550a9f4c44173a37664d938f1355f0f92a47a7").region("eu").build();
+/// ```
 #[derive(typed_builder::TypedBuilder)]
 pub struct SquadCast {
     #[builder(setter(into))]
     token: String,
+
+    #[builder(setter(into))]
+    region: String,
 
     #[builder(default, setter(strip_option))]
     base_url: Option<String>,
@@ -16,9 +32,11 @@ pub struct SquadCast {
 impl super::Backend for SquadCast {
     fn send(&mut self, alert: crate::alert::Alert) -> anyhow::Result<()> {
         let url = Url::parse(
-            self.base_url
-                .as_deref()
-                .unwrap_or("https://api.eu.squadcast.com"),
+            &self
+                .base_url
+                .as_ref()
+                .cloned()
+                .unwrap_or_else(|| format!("https://api.{}.squadcast.com", self.region)),
         )
         .context("Cannot parse URL")?
         .join(&format!("/v2/incidents/api/{}", self.token))

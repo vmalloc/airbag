@@ -38,6 +38,7 @@ async fn main() -> anyhow::Result<()> {
         airbag::configure(
             airbag::backends::squadcast::SquadCast::builder()
                 .token(token)
+                .region("eu")
                 .build(),
         )
     } else {

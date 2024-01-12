@@ -38,6 +38,7 @@ fn mock_sc() -> (MockServer, airbag::ConfiguredHubGuard) {
     let guard = airbag::configure_thread_local(
         airbag::backends::SquadCast::builder()
             .token(TOKEN)
+            .region("eu")
             .base_url(server.url(""))
             .build(),
     );

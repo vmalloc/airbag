@@ -14,6 +14,7 @@
 //! ```
 //! let _guard = airbag::configure(
 //!     airbag::backends::SquadCast::builder()
+//!       .region("eu")
 //!       .token("your SquadCast API token here")
 //!       .build());
 //! ```
