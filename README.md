@@ -11,13 +11,13 @@ Airbag is a Rust library that aims to simplify incident reporting to various 3rd
 
 ## Getting Started
 
-You can configure Airbag on either a global scope (whole application), in which case it will also catch and report panics, or on a thread-level scope (in which case panics will not get automatically reported). This is done via the `airbag::c
+You can configure Airbag on either a global scope (whole application), in which case it will also catch and report panics, or on a thread-level scope (in which case panics will not get automatically reported). This is done via the `airbag::configure` and `airbag::configure_thread_local`:
 
 ```
 let _guard = airbag::configure(airbag::backends::SquadCast::builder().region("eu").token("token here").build());
 ```
 
-Or 
+Or
 ```
 let _guard = airbag::configure_thread_local(airbag::backends::SquadCast::builder().region("eu").token("token here").build());
 ```
