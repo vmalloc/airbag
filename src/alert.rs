@@ -2,6 +2,8 @@ use std::panic::PanicInfo;
 
 use serde_json::json;
 
+use crate::ProcessingReceipt;
+
 pub struct Alert {
     id: u64,
     meta: AlertMeta,
@@ -171,6 +173,10 @@ impl AlertBuilder {
 
     pub fn build(self) -> Alert {
         self.into()
+    }
+
+    pub fn trigger(self) -> ProcessingReceipt {
+        crate::hub::trigger(self.build())
     }
 }
 

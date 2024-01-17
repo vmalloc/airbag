@@ -22,6 +22,13 @@ Or
 let _guard = airbag::configure_thread_local(airbag::backends::SquadCast::builder().region("eu").token("token here").build());
 ```
 
+After configuring Airbag, you can emit an alert by:
+```
+airbag::alert::Alert::builder()
+    .title("Alert title")
+    .dedup_key("alert-dedup-key")
+    .trigger();
+```
 
 ## Documentation
 
