@@ -84,6 +84,37 @@ impl Alert {
     pub(crate) fn meta(&self) -> &AlertMeta {
         &self.meta
     }
+
+    pub fn get_field(&self, name: impl AsRef<str>) -> Option<&serde_json::Value> {
+        self.value.get(name.as_ref())
+    }
+
+    pub fn get_fields(&self) -> &serde_json::Value {
+        &self.value
+    }
+
+    /// Consumes this alert, sets a field on it and returns a new alert with the set field
+    pub fn with_field(
+        mut self,
+        field_name: impl AsRef<str>,
+        field_value: impl serde::Serialize,
+    ) -> Self {
+        self.value[field_name.as_ref()] = json!(field_value);
+        self
+    }
+
+    /// Consumes this alert, sets a field on it if it does not exist already and returns a new alert with the set field
+    pub fn with_field_if_missing(
+        mut self,
+        field_name: impl AsRef<str>,
+        field_value: impl serde::Serialize,
+    ) -> Self {
+        let field_name = field_name.as_ref();
+        if self.value.get(field_name).is_none() {
+            self.value[field_name] = json!(field_value);
+        }
+        self
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -269,5 +300,32 @@ pub(crate) mod middleware {
             }
             alert
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::Alert;
+
+    #[test]
+    fn test_with_field() {
+        let alert = Alert::builder().build().with_field("x", "y");
+        assert_eq!(alert.get_field("x").unwrap().as_str().unwrap(), "y");
+    }
+
+    #[test]
+    fn test_with_field_if_missing_missing() {
+        let alert = Alert::builder().build().with_field_if_missing("x", "y");
+        assert_eq!(alert.get_field("x").unwrap().as_str().unwrap(), "y");
+    }
+
+    #[test]
+    fn test_with_field_if_missing_exists() {
+        let alert = Alert::builder()
+            .build()
+            .with_field("x", "1")
+            .with_field_if_missing("x", "y");
+        assert_eq!(alert.get_field("x").unwrap().as_str().unwrap(), "1");
     }
 }
