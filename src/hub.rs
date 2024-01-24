@@ -3,7 +3,9 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use crate::backends::Backend;
+use parking_lot::Mutex;
+
+use crate::{backends::Backend, middleware::Middleware};
 
 static GLOBAL_HUB: OnceLock<Hub> = OnceLock::new();
 
@@ -11,10 +13,14 @@ thread_local! {
     static TL_HUB: RefCell<Option<Hub>> = RefCell::new(None);
 }
 
-pub(crate) fn trigger(alert: crate::alert::Alert) -> ProcessingReceipt {
+pub(crate) fn trigger(mut alert: crate::alert::Alert) -> ProcessingReceipt {
     let receipt = ProcessingReceipt::default();
     if let Some(dispatch) = get_backend() {
         log::debug!("Triggering alert #{}", alert.id());
+        let middlewares = dispatch.middleware.lock().clone();
+        for callback in middlewares {
+            alert = callback.process(alert);
+        }
         let _ = dispatch
             .sender
             .send(HubMessage::Alert(alert, receipt.clone()));
@@ -37,6 +43,7 @@ pub(crate) enum HubMessage {
 #[derive(Clone)]
 pub(crate) struct HubDispatch {
     sender: crossbeam::channel::Sender<HubMessage>,
+    middleware: Arc<Mutex<Vec<Arc<dyn Middleware + Send + Sync + 'static>>>>,
 }
 
 pub(crate) fn get_backend() -> Option<HubDispatch> {
@@ -102,11 +109,30 @@ fn spawn_backend<B: Backend + Send + 'static>(mut backend: B) -> HubDispatch {
         log::debug!("Backend thread terminating")
     });
 
-    HubDispatch { sender }
+    HubDispatch {
+        sender,
+        middleware: Default::default(),
+    }
 }
 
 pub struct ConfiguredHubGuard {
     dispatch: HubDispatch,
+}
+
+impl ConfiguredHubGuard {
+    /// installs a middleware to the configured hub
+    pub fn install<M: Middleware + Send + Sync + 'static>(self, middleware: M) -> Self {
+        self.dispatch.middleware.lock().push(Arc::new(middleware));
+        self
+    }
+
+    /// Installs a middleware that maps a function over triggered alerts
+    pub fn map<F: Fn(crate::Alert) -> crate::Alert + Send + Sync + 'static>(self, f: F) -> Self
+    where
+        Self: Sized,
+    {
+        self.install(crate::middleware::Map::new(f))
+    }
 }
 
 impl Drop for ConfiguredHubGuard {

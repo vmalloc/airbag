@@ -6,9 +6,8 @@ fn test_middleware_title_prefix() {
     let backend = TestBackend::default();
     let target = backend.target();
 
-    let _guard = airbag::configure_thread_local(
-        backend.wrap(airbag::middleware::TitlePrefix::new("some_prefix:")),
-    );
+    let _guard = airbag::configure_thread_local(backend)
+        .install(airbag::middleware::TitlePrefix::new("some_prefix:"));
 
     airbag::trigger(Alert::builder().title("hello")).wait_processed();
 
@@ -21,9 +20,8 @@ fn test_middleware_dedup_prefix() {
     let backend = TestBackend::default();
     let target = backend.target();
 
-    let _guard = airbag::configure_thread_local(
-        backend.wrap(airbag::middleware::DedupKeyPrefix::new("some_prefix:")),
-    );
+    let _guard = airbag::configure_thread_local(backend)
+        .install(airbag::middleware::DedupKeyPrefix::new("some_prefix:"));
 
     airbag::trigger(Alert::builder().title("hello").dedup_key("dedup_key")).wait_processed();
 
@@ -37,7 +35,7 @@ fn test_middleware_map() {
     let backend = TestBackend::default();
     let target = backend.target();
 
-    let _guard = airbag::configure_thread_local(backend.map(|alert| alert.with_field("x", "y")));
+    let _guard = airbag::configure_thread_local(backend).map(|alert| alert.with_field("x", "y"));
 
     Alert::builder().title("hello").trigger().wait_processed();
 

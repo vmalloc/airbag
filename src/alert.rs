@@ -240,9 +240,9 @@ pub(crate) mod middleware {
     /// use airbag::prelude::*;
     ///
     /// let _guard = airbag::configure(
-    ///   airbag::backends::PagerDuty::builder().token("your token").build().wrap(
-    ///     airbag::middleware::TitlePrefix::new("your prefix")
-    ///   )  
+    ///   airbag::backends::PagerDuty::builder().token("your token").build()
+    /// ).install(
+    ///   airbag::middleware::TitlePrefix::new("your prefix")
     /// );
     /// ```
     pub struct TitlePrefix {
@@ -257,7 +257,7 @@ pub(crate) mod middleware {
     }
 
     impl crate::middleware::Middleware for TitlePrefix {
-        fn process(&mut self, mut alert: super::Alert) -> crate::alert::Alert {
+        fn process(&self, mut alert: super::Alert) -> crate::alert::Alert {
             alert.meta.title.replace(format!(
                 "{}{}",
                 self.prefix,
@@ -273,9 +273,9 @@ pub(crate) mod middleware {
     /// use airbag::prelude::*;
     ///
     /// let _guard = airbag::configure(
-    ///   airbag::backends::PagerDuty::builder().token("your token").build().wrap(
-    ///     airbag::middleware::DedupKeyPrefix::new("your prefix")
-    ///   )  
+    ///   airbag::backends::PagerDuty::builder().token("your token").build()
+    /// ).install(
+    ///   airbag::middleware::DedupKeyPrefix::new("your prefix")
     /// );
     /// ```
 
@@ -291,7 +291,7 @@ pub(crate) mod middleware {
     }
 
     impl crate::middleware::Middleware for DedupKeyPrefix {
-        fn process(&mut self, mut alert: super::Alert) -> crate::alert::Alert {
+        fn process(&self, mut alert: super::Alert) -> crate::alert::Alert {
             if let Some(dedup_key) = alert.meta.dedup_key.take() {
                 alert
                     .meta
