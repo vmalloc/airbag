@@ -34,6 +34,7 @@ mod utils;
 pub use alert::Alert;
 pub use hub::ConfiguredHubGuard;
 pub use hub::{configure, configure_thread_local, ProcessingReceipt};
+pub use result::AirbagResult;
 
 pub fn trigger(alert: impl Into<Alert>) -> ProcessingReceipt {
     let alert = alert.into();
