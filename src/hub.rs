@@ -121,7 +121,7 @@ pub struct ConfiguredHubGuard {
 
 impl ConfiguredHubGuard {
     /// installs a middleware to the configured hub
-    pub fn install<M: Middleware + Send + Sync + 'static>(self, middleware: M) -> Self {
+    pub fn with_middleware<M: Middleware + Send + Sync + 'static>(self, middleware: M) -> Self {
         self.dispatch.middleware.lock().push(Arc::new(middleware));
         self
     }
@@ -131,7 +131,7 @@ impl ConfiguredHubGuard {
     where
         Self: Sized,
     {
-        self.install(crate::middleware::Map::new(f))
+        self.with_middleware(crate::middleware::Map::new(f))
     }
 }
 

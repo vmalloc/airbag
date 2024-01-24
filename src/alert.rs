@@ -241,7 +241,7 @@ pub(crate) mod middleware {
     ///
     /// let _guard = airbag::configure(
     ///   airbag::backends::PagerDuty::builder().token("your token").build()
-    /// ).install(
+    /// ).with_middleware(
     ///   airbag::middleware::TitlePrefix::new("your prefix")
     /// );
     /// ```
@@ -274,7 +274,7 @@ pub(crate) mod middleware {
     ///
     /// let _guard = airbag::configure(
     ///   airbag::backends::PagerDuty::builder().token("your token").build()
-    /// ).install(
+    /// ).with_middleware(
     ///   airbag::middleware::DedupKeyPrefix::new("your prefix")
     /// );
     /// ```

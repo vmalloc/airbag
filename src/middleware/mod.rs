@@ -8,7 +8,9 @@
 //! ```
 //! use airbag::prelude::*;
 //!
-//! airbag::configure(airbag::backends::PagerDuty::builder().token("PD token").build()).install(airbag::middleware::TitlePrefix::new("Prefix: "));
+//! airbag::configure(
+//!   airbag::backends::PagerDuty::builder().token("PD token").build()
+//! ).with_middleware(airbag::middleware::TitlePrefix::new("Prefix: "));
 //! ```
 //!
 //! Most use cases should probably opt for the [Backend::map] method, which allows wrapping backends in middleware that processes
