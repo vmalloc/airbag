@@ -89,12 +89,17 @@ pub fn configure_thread_local<B: Backend + Send + 'static>(backend: B) -> Config
 fn spawn_backend<B: Backend + Send + 'static>(mut backend: B) -> HubDispatch {
     let (sender, receiver) = crossbeam::channel::bounded(1024);
     std::thread::spawn(move || {
+        log::debug!("Backend started...");
         while let Ok(msg) = receiver.recv() {
             match msg {
                 HubMessage::Alert(alert, receipt) => {
+                    let alert_id = alert.id();
+                    log::debug!("Backend got alert #{alert_id}. Sending");
                     let res = backend.send(alert);
                     if let Err(e) = res {
                         log::error!("Failed sending alert: {e:?}");
+                    } else {
+                        log::debug!("Alert #{alert_id} sent successfully");
                     }
                     receipt.mark_processed();
                 }
@@ -104,6 +109,7 @@ fn spawn_backend<B: Backend + Send + 'static>(mut backend: B) -> HubDispatch {
                     break;
                 }
             }
+            log::debug!("Backend waiting for next message...")
         }
 
         log::debug!("Backend thread terminating")
