@@ -6,7 +6,7 @@ homepage = "https://github.com/vmalloc/airbag"
 license = "MIT"
 name = "airbag"
 repository = "https://github.com/vmalloc/airbag"
-version = "4.0.2"
+version = "4.0.3"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
