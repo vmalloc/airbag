@@ -94,7 +94,7 @@ fn spawn_backend<B: Backend + Send + 'static>(mut backend: B) -> HubDispatch {
             match msg {
                 HubMessage::Alert(alert, receipt) => {
                     let alert_id = alert.id();
-                    log::debug!("Backend got alert #{alert_id}. Sending");
+                    log::debug!("Backend got alert #{alert_id}. Sending...");
                     let res = backend.send(alert);
                     if let Err(e) = res {
                         log::error!("Failed sending alert: {e:?}");
