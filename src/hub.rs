@@ -1,5 +1,6 @@
 use std::{
     cell::RefCell,
+    collections::HashMap,
     sync::{Arc, OnceLock},
 };
 
@@ -86,20 +87,42 @@ pub fn configure_thread_local<B: Backend + Send + 'static>(backend: B) -> Config
     ConfiguredHubGuard { dispatch }
 }
 
+const MIN_INTERVAL_BETWEEN_DUP_ALERTS: std::time::Duration = std::time::Duration::from_secs(5);
+
 fn spawn_backend<B: Backend + Send + 'static>(mut backend: B) -> HubDispatch {
     let (sender, receiver) = crossbeam::channel::bounded(1024);
     std::thread::spawn(move || {
+        let mut recent_dedup_keys: HashMap<String, std::time::Instant> = HashMap::new();
         log::debug!("Backend started...");
         while let Ok(msg) = receiver.recv() {
             match msg {
                 HubMessage::Alert(alert, receipt) => {
                     let alert_id = alert.id();
-                    log::debug!("Backend got alert #{alert_id}. Sending...");
-                    let res = backend.send(alert);
-                    if let Err(e) = res {
-                        log::error!("Failed sending alert: {e:?}");
+                    let now = std::time::Instant::now();
+
+                    let should_send = if let Some(dedup_key) = &alert.meta().dedup_key {
+                        recent_dedup_keys.retain(|_, last_sent| {
+                            *last_sent >= now - MIN_INTERVAL_BETWEEN_DUP_ALERTS
+                        });
+                        !recent_dedup_keys.contains_key(dedup_key)
                     } else {
-                        log::debug!("Alert #{alert_id} sent successfully");
+                        true
+                    };
+
+                    if should_send {
+                        let dedup_key = alert.meta().dedup_key.clone();
+                        log::debug!("Backend got alert #{alert_id}. Sending...");
+                        let res = backend.send(alert);
+                        if let Err(e) = res {
+                            log::error!("Failed sending alert: {e:?}");
+                        } else {
+                            log::debug!("Alert #{alert_id} sent successfully");
+                            if let Some(key) = dedup_key {
+                                recent_dedup_keys.insert(key, now);
+                            }
+                        }
+                    } else {
+                        log::debug!("Skipping sending #{alert_id} - same dedup key sent recently");
                     }
                     receipt.mark_processed();
                 }
