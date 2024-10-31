@@ -11,7 +11,7 @@ use crate::{backends::Backend, middleware::Middleware};
 static GLOBAL_HUB: OnceLock<Hub> = OnceLock::new();
 
 thread_local! {
-    static TL_HUB: RefCell<Option<Hub>> = RefCell::new(None);
+    static TL_HUB: RefCell<Option<Hub>> = const { RefCell::new(None) };
 }
 
 pub(crate) fn trigger(mut alert: crate::alert::Alert) -> ProcessingReceipt {
