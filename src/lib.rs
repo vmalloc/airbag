@@ -21,7 +21,6 @@
 //! <p style="background:rgba(255,181,77,0.16);padding:0.75em;">
 //!  <strong>Note:</strong> when in thread-local mode, Airbag does not catch panics, as panic handlers are always a shared resource in Rust
 //! </p>
-///
 pub mod alert;
 pub mod backends;
 mod hub;

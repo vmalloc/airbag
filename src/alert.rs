@@ -1,8 +1,6 @@
-use std::panic::PanicInfo;
-
-use serde_json::json;
-
 use crate::ProcessingReceipt;
+use serde_json::json;
+use std::panic::PanicHookInfo;
 
 pub struct Alert {
     id: u64,
@@ -50,7 +48,7 @@ impl Alert {
         returned
     }
 
-    pub(crate) fn build_panic_alert(info: &PanicInfo) -> AlertBuilder {
+    pub(crate) fn build_panic_alert(info: &PanicHookInfo) -> AlertBuilder {
         let location = if let Some(location) = info.location() {
             format!("{:?}", location)
         } else {
